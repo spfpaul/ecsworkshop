@@ -1,29 +1,30 @@
-# The manifest for the "ecsdemo-frontend" service.
-# Read the full specification for the "Load Balanced Web Service" type at:
-#  https://aws.github.io/copilot-cli/docs/manifest/lb-web-service/
+# The manifest for the "ecsdemo-nodejs" service.
+# Read the full specification for the "Backend Service" type at:
+#  https://aws.github.io/copilot-cli/docs/manifest/backend-service/
 
 # Your service name will be used in naming your resources like log groups, ECS services, etc.
-name: ecsdemo-frontend
-type: Load Balanced Web Service
+name: ecsdemo-nodejs
+type: Backend Service
 
-# Distribute traffic to your service.
-http:
-  # Requests to this path will be forwarded to your service.
-  # To match all requests you can use the "/" path.
-  path: '/'
-  # You can specify a custom health check path. The default is "/".
-  # healthcheck: '/'
+# Your service is reachable at "http://ecsdemo-nodejs.${COPILOT_SERVICE_DISCOVERY_ENDPOINT}:3000" but is not public.
 
 # Configuration for your containers and service.
 image:
-  # Docker build arguments. For additional overrides: https://aws.github.io/copilot-cli/docs/manifest/lb-web-service/#image-build
-  build: ecsdemo-frontend/Dockerfile
+  # Docker build arguments. For additional overrides: https://aws.github.io/copilot-cli/docs/manifest/backend-service/#image-build
+  build: ecsdemo-nodejs/Dockerfile
   # Port exposed through your container to route traffic to it.
   port: 3000
+  healthcheck:
+    # Container health checks: https://aws.github.io/copilot-cli/docs/manifest/backend-service/#image-healthcheck
+    command: ["CMD-SHELL", "curl -f -s http://localhost:3000/health/ || exit 1"]
+    interval: 10s
+    retries: 2
+    timeout: 3s
+    start_period: 0s
 
 cpu: 256       # Number of CPU units for the task.
 memory: 512    # Amount of memory in MiB used by the task.
-platform: linux/x86_64  # See https://aws.github.io/copilot-cli/docs/manifest/lb-web-service/#platform
+platform: linux/x86_64     # See https://aws.github.io/copilot-cli/docs/manifest/backend-service/#platform
 count: 1       # Number of tasks that should be running in your service.
 exec: true     # Enable running commands in your container.
 
@@ -41,6 +42,3 @@ exec: true     # Enable running commands in your container.
 #    count: 2               # Number of tasks to run for the "test" environment.
 #    deployment:            # The deployment strategy for the "test" environment.
 #       rolling: 'recreate' # Stops existing tasks before new ones are started for faster deployments.
-variables:
-  CRYSTAL_URL: "http://ecsdemo-crystal.test.ecsworkshop.local:3000/crystal"
-  NODEJS_URL: "http://ecsdemo-nodejs.test.ecsworkshop.local:3000"
